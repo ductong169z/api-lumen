@@ -20,6 +20,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::get('/question', function () {
-    $data=DB::table("data")->get();
-    return response()->json($data);
+    $data = DB::table("data")->get();
+    return response()->json([
+        'status' => "success",
+        'data' => $data
+    ]);
 });
