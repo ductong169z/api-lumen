@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\ChatController;
+use App\Http\Controllers\ContentController;
+use App\Models\Content;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,10 +21,18 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('/question', function () {
-    $data = DB::table("data")->get();
-    return response()->json([
-        'status' => "success",
-        'data' => $data
-    ]);
-});
+Route::get('question', function (Request $request) {
+
+        $type = $request->type;
+        $pack = $request->package;
+        $content = $request->content;
+        $contents = Content::with('package');
+        if(isset($type))
+            $contents->where('type',$type);
+        if(isset($pack))
+            $contents->where('pack',$pack);
+        if(isset($content))
+            $contents->where('content','like','%'.$content.'%');
+        return ['success'=>true,'data'=>$contents->get()];
+    }
+);
