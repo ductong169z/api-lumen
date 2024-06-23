@@ -28,7 +28,7 @@ class ContentController extends Controller
             }
             return ['success'=>true,'data'=>$contents->limit(2)->get()];
         }
-        $contents=$contents->orderBy('id','desc')->cursorPaginate(10);
+        $contents=$contents->orderBy('id','desc')->cursorPaginate(20);
         $packages = Package::all()->pluck( 'name', 'id' )->prepend('All','');
         return view('content.index',compact('contents','packages'));
     }
