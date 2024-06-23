@@ -3,6 +3,7 @@
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ContentController;
 use App\Models\Content;
+use App\Models\Package;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -26,7 +27,7 @@ Route::get('question', function (Request $request) {
         $type = $request->type;
         $pack = $request->package;
         $content = $request->content;
-        $contents = Content::with('package');
+        $contents = Content::query();
         if(isset($type))
             $contents->where('type',$type);
         if(isset($pack))
@@ -36,3 +37,7 @@ Route::get('question', function (Request $request) {
         return ['success'=>true,'data'=>$contents->get()];
     }
 );
+
+Route::get('packages', function () {
+    return ['success'=>true,'data'=>Package::all()];
+});
