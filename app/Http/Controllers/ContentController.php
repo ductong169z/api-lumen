@@ -5,80 +5,75 @@ namespace App\Http\Controllers;
 use App\Models\Content;
 use App\Models\Package;
 use Illuminate\Http\Request;
+use App\Repositories\ContentRepository;
+use App\Repositories\PackageRepository;
 
 class ContentController extends Controller
 {
+    protected $contentRepository;
+    protected $packageRepository;
+
+
+    public function __construct(ContentRepository $contentRepository, PackageRepository $packageRepository)
+    {
+        $this->contentRepository = $contentRepository;
+        $this->packageRepository = $packageRepository;
+    }
+
     public function index(Request $request)
     {
-        $type = $request->type;
-        $pack = $request->package;
-        $content = $request->content;
-        $contents = Content::with('package');
-        if(isset($type))
-            $contents->where('type',$type);
-        if(isset($pack))
-            $contents->where('pack',$pack);
-        if(isset($content))
-            $contents->where('content','like','%'.$content.'%');
-    
-        if($request->wantsJson()){
-            $key=$request->key;
-            if($key!="hibrosoft"){
-                return response('Unauthorized','403');
-            }
-            return ['success'=>true,'data'=>$contents->limit(2)->get()];
-        }
-        $contents=$contents->orderBy('id','desc')->cursorPaginate(20);
-        $packages = Package::all()->pluck( 'name', 'id' )->prepend('All','');
-        return view('content.index',compact('contents','packages'));
+        $contents = $this->contentRepository->all([
+            'content' => $request->content,
+            'type' => $request->type,
+            'pack' => $request->pack,
+        ], 20);
+        $packages = $this->packageRepository->all()->pluck('name', 'id')->prepend('All', '');
+        return view('content.index', compact('contents', 'packages'));
     }
     public function create()
     {
-        $packages = Package::all()->pluck( 'name', 'id' );
-
-        return view('content.create',compact('packages'));
+        $packages = $this->packageRepository->all()->pluck('name', 'id');
+        return view('content.create', compact('packages'));
     }
 
     public function store(Request $request)
     {
-      $validated=  $request->validate([
-            'type' => 'required',
-            'package' => 'required',
-            'content' => 'required',
-        ]);
-
-        $content = new Content();
-        $content->type = $request->type;
-        $content->pack = $request->package;
-        $content->content = $request->content;
-        $content->save();
-        return redirect()->route('contents.index');
-    }
-    public function edit($id)
-    {
-        $content = Content::find($id);
-        $packages = Package::all()->pluck( 'name', 'id' );
-
-        return view('content.edit', compact('content','packages'));
-    }
-    public function update(Request $request, $id)
-    {   
         $request->validate([
             'type' => 'required',
             'package' => 'required',
             'content' => 'required',
         ]);
-        $content = Content::find($id);
-        $content->type = $request->type;
-        $content->pack = $request->package;
-        $content->content = $request->content;
-        $content->save();
+
+        $this->contentRepository->create([
+            'type' => $request->type,
+            'pack' => $request->package,
+            'content' => $request->content,
+        ]);
+        return redirect()->route('contents.index');
+    }
+    public function edit($id)
+    {
+        $content = $this->contentRepository->find($id);
+        $packages = $this->packageRepository->all()->pluck('name', 'id');
+        return view('content.edit', compact('content', 'packages'));
+    }
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'type' => 'required',
+            'package' => 'required',
+            'content' => 'required',
+        ]);
+      $this->contentRepository->update([
+        'type' => $request->type,
+        'pack' => $request->package,
+        'content' => $request->content,
+      ], $id);
         return redirect()->route('contents.index');
     }
     public function destroy($id)
     {
-        $content = Content::find($id);
-        $content->delete();
+        $this->contentRepository->delete($id);
         return redirect()->route('contents.index');
     }
 }
